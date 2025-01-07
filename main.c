@@ -13,7 +13,7 @@ static char *readFile(const char *path)
     FILE *file = fopen(path, "rb");
     if (file == NULL)
     {
-        fprintf(stderr, "Could not open file \"%s\".\n", path);
+        fprintf(stderr, "[ERROR] could not open file \"%s\".\n", path);
         exit(1);
     }
     fseek(file, 0L, SEEK_END);
@@ -23,13 +23,13 @@ static char *readFile(const char *path)
     char *buffer = (char *)malloc(fileSize + 1);
     if (buffer == NULL)
     {
-        fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
+        fprintf(stderr, "[ERROR] not enough memory to read \"%s\".\n", path);
         exit(1);
     }
     size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
     if (bytesRead < fileSize)
     {
-        fprintf(stderr, "Could not read file \"%s\".\n", path);
+        fprintf(stderr, "[ERROR] could not read file \"%s\".\n", path);
         fclose(file);
         free(buffer);
         exit(0);
@@ -39,10 +39,18 @@ static char *readFile(const char *path)
     fclose(file);
     return buffer;
 }
-
-int main()
+void usage(char *argv[])
 {
-    char *path = "./examples/00.p";
+    fprintf(stderr, "[ERROR] %s <filename>\n", argv[0]);
+}
+int main(int argc, char *argv[])
+{
+    if (argc < 2)
+    {
+        usage(argv);
+        return 1;
+    }
+    char *path = argv[1];
     char *source = readFile(path);
     if (strlen(source) == 0)
     {
@@ -52,7 +60,6 @@ int main()
     Lexer *lexer = init_lexer(source, path);
     Parser *parser = init_parser(lexer);
     AST *ast = parser_parse(parser);
-    
     if (parser->had_error == 0)
     {
         ast_print(ast);
