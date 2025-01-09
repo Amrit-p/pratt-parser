@@ -181,9 +181,8 @@ void parser_error(Parser *parser, char *message)
 }
 AST *parser_parse_string(Parser *parser)
 {
-    AST *string = init_ast(AST_STRING);
+    AST *string = init_primary_ast(AST_STRING, token_text(parser->current_token));
     string->token = parser->current_token;
-    string->name = token_text(parser->current_token);
     parser_eat(parser, TOKEN_STRING, 0);
     return string;
 }
@@ -194,14 +193,14 @@ AST *parser_parse_primary(Parser *parser)
     case TOKEN_TRUE:
     {
 
-        AST *ast_true = init_ast(AST_TRUE);
+        AST *ast_true = init_primary_ast(AST_TRUE, token_text(parser->current_token));
         ast_true->token = parser->current_token;
         parser_eat(parser, TOKEN_TRUE, 0);
         return ast_true;
     }
     case TOKEN_FALSE:
     {
-        AST *ast_false = init_ast(AST_FALSE);
+        AST *ast_false = init_primary_ast(AST_FALSE, token_text(parser->current_token));
         ast_false->token = parser->current_token;
         parser_eat(parser, TOKEN_FALSE, 0);
         return ast_false;
@@ -209,15 +208,14 @@ AST *parser_parse_primary(Parser *parser)
     case TOKEN_NULL:
     {
 
-        AST *ast_null = init_ast(AST_NULL);
+        AST *ast_null = init_primary_ast(AST_NULL, token_text(parser->current_token));
         ast_null->token = parser->current_token;
         parser_eat(parser, TOKEN_NULL, 0);
         return ast_null;
     }
     default:
     {
-        AST *primary = init_ast(AST_ID);
-        primary->name = token_text(parser->current_token);
+        AST *primary = init_primary_ast(AST_ID, token_text(parser->current_token));
         primary->token = parser->current_token;
         parser_eat(parser, TOKEN_ID, 0);
         return primary;
@@ -259,7 +257,7 @@ AST *parser_parse_number(Parser *parser)
     char buffer[parser->current_token.length + 1];
     sprintf(buffer, "%.*s", (int)parser->current_token.length, parser->current_token.start);
     parser_eat(parser, TOKEN_NUMBER, 0);
-    number->number = atof(buffer);
+    number->as.number = atof(buffer);
     return number;
 }
 
@@ -294,31 +292,30 @@ AST *parser_parse_call(Parser *parser, AST *callee)
         parser_token_error(callee->token, parser_unexpected_token(callee->token, "callee should be a identifier."));
     }
     AST *call = init_ast(AST_FUNCTION_CALL);
-    call->left = callee;
+    call->as.functionCall.callee = callee;
     parser->parsing_call = 1;
-    call->value = parser_parse_group(parser);
+    call->as.functionCall.args = parser_parse_group(parser);
     parser->parsing_call = 0;
     return call;
 }
 AST *parser_parse_prefix(Parser *parser)
 {
-    AST *unary = init_ast(AST_UNARY);
+    AST *unary = init_unary_ast(parser->current_token.type);
     unary->token = parser->current_token;
-    unary->name = token_text(parser->current_token);
     Token token = parser_eat(parser, parser->current_token.type, 0);
     AST *operand = parser_parse_precendence(parser, PREC_UNARY);
     if ((token.type == TOKEN_INCREMENT || token.type == TOKEN_DECREMENT) && operand && operand->type != AST_ID)
     {
         parser_token_error(operand->token, "invalid expr in prefix operation.");
     }
-    if (operand == NULL)
+    if (!operand)
         return NULL;
-    unary->value = operand;
+    unary->as.unaryExpr.value = operand;
     return unary;
 }
 AST *parser_parse_comma(Parser *parser, AST *prefix)
 {
-    AST *exprs = init_ast(AST_SEQUENCEEXPR);
+    AST *exprs = init_ast(AST_SEQUENCE);
     ast_push(exprs, prefix);
     while (parser->current_token.type == TOKEN_COMMA)
     {
@@ -335,7 +332,7 @@ AST *parser_parse_comma(Parser *parser, AST *prefix)
 }
 AST *parser_parse_infix(Parser *parser, AST *prefix)
 {
-    AST *bin = init_ast(AST_BINARY);
+    AST *bin = init_binary_ast(parser->current_token.type);
     bin->token = parser->current_token;
     Token token = parser_eat(parser, parser->current_token.type, 0);
 
@@ -345,15 +342,14 @@ AST *parser_parse_infix(Parser *parser, AST *prefix)
         return NULL;
     }
 
-    bin->name = token_text(token);
     ParseRule *rule = parser_production(token.type);
     Precedence precedence = token.type == TOKEN_ASSIGNMENT ? PREC_ASSIGNMENT : rule->precedence + 1;
     AST *right = parser_parse_precendence(parser, precedence);
 
     if (right == NULL)
         return NULL;
-    bin->left = prefix;
-    bin->right = right;
+    bin->as.binaryExpr.left = prefix;
+    bin->as.binaryExpr.right = right;
 
     return bin;
 }
@@ -361,8 +357,7 @@ AST *parser_parse_ternary(Parser *parser, AST *condition)
 {
     AST *ternary = init_ast(AST_TERNARY);
     ternary->token = parser->current_token;
-    ternary->name = token_text(parser->current_token);
-    ternary->value = condition;
+    ternary->as.ternaryExpr.condition = condition;
     TokenType operatorType = parser->current_token.type;
     parser_eat(parser, operatorType, 0);
     AST *then = parser_parse_expr(parser);
@@ -373,18 +368,19 @@ AST *parser_parse_ternary(Parser *parser, AST *condition)
     }
     then->token = parser->current_token;
     parser_eat(parser, TOKEN_COLON, 0);
-    AST *_else = parser_parse_expr(parser);
-    ternary->left = then;
-    ternary->right = _else;
+    AST *other_wise = parser_parse_expr(parser);
+    if (!other_wise)
+        return NULL;
+    ternary->as.ternaryExpr.then = then;
+    ternary->as.ternaryExpr.other_wise = other_wise;
     return ternary;
 }
 AST *parser_parse_postfix(Parser *parser, AST *oprand)
 {
-    AST *postfix = init_ast(AST_POSTFIX);
+    AST *postfix = init_postfix_ast(parser->current_token.type);
     postfix->token = parser->current_token;
-    postfix->name = token_text(parser->current_token);
-    postfix->value = oprand;
-    parser_eat(parser, parser->current_token.type, "expected posfix something");
+    postfix->as.postfixExpr.operand = oprand;
+    parser_eat(parser, parser->current_token.type, 0);
     return postfix;
 }
 void parser_state(Parser *parser)
@@ -399,13 +395,12 @@ AST *parser_parse_expr(Parser *parser)
 }
 AST *parser_parse_print(Parser *parser)
 {
-    AST *print = init_ast(AST_STMT);
-    print->token = parser->current_token;
-    print->name = token_text(parser->current_token);
+    AST *print = init_stmt_ast(STMT_PRINT);
     parser_eat(parser, TOKEN_PRINT, 0);
-    print->value = parser_parse_expr(parser);
-    if (print->value == NULL)
+    AST *expr = parser_parse_expr(parser);
+    if (!expr)
         return NULL;
+    print->as.statment.as.print.expr = expr;
     return print;
 }
 AST *parser_parse_stmt(Parser *parser)
@@ -420,7 +415,7 @@ AST *parser_parse_stmt(Parser *parser)
         if (parser->current_token.type == TOKEN_RCURLY)
         {
             parser_eat(parser, TOKEN_RCURLY, 0);
-            return NULL;
+            return init_stmt_ast(STMT_COMPOUND);
         }
         stmt = parser_parse_compound(parser);
         parser_eat(parser, TOKEN_RCURLY, "expected '}'");
@@ -442,18 +437,18 @@ AST *parser_parse_stmt(Parser *parser)
 AST *parser_parse_if(Parser *parser)
 {
     parser_eat(parser, TOKEN_IF, 0);
-    AST *_if = init_ast(AST_IF);
-    _if->value = parser_parse_group(parser);
+    AST *_if = init_stmt_ast(STMT_IF);
+    _if->as.statment.as._if.condition = parser_parse_group(parser);
 
     if (parser->current_token.type == TOKEN_SEMICOLON)
         parser_advance(parser);
     else
     {
-        _if->left = parser_parse_stmt(parser);
+        _if->as.statment.as._if.then = parser_parse_decl(parser);
         if (parser->current_token.type == TOKEN_ELSE)
         {
             parser_eat(parser, TOKEN_ELSE, 0);
-            _if->right = parser_parse_decl(parser);
+            _if->as.statment.as._if.other_wise = parser_parse_decl(parser);
         }
     }
 
@@ -490,7 +485,7 @@ AST *parser_parse_decl(Parser *parser)
 }
 AST *parser_parse_compound(Parser *parser)
 {
-    AST *compound = init_ast(AST_COMPOUND);
+    AST *compound = init_stmt_ast(STMT_COMPOUND);
     while (parser->current_token.type != TOKEN_EOF)
     {
         AST *child = parser_parse_decl(parser);

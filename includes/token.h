@@ -49,6 +49,7 @@ typedef enum
     TOKEN_BITWISE_NOT,
     TOKEN_LCURLY,
     TOKEN_RCURLY,
+    TOKEN_BITWISE_XOR,
 } TokenType;
 typedef struct
 {
