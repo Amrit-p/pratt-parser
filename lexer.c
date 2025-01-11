@@ -269,3 +269,7 @@ Lexer *init_lexer(char *source, char *path)
     lexer->file_path = path;
     return lexer;
 }
+void lexer_free(Lexer *lexer)
+{
+    free(lexer);
+}

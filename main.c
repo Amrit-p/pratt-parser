@@ -60,8 +60,12 @@ int main(int argc, char *argv[])
     Lexer *lexer = init_lexer(source, path);
     Parser *parser = init_parser(lexer);
     AST *ast = parser_parse(parser);
+    free(source);
     if (parser->had_error == 0)
     {
         ast_print(ast);
+        ast_free(ast);
     }
+    parser_free(parser);
+    lexer_free(lexer);
 }

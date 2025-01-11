@@ -60,4 +60,5 @@ typedef struct
     ParseInfixFn infix;
     Precedence precedence;
 } ParseRule;
+void parser_free(Parser *parser);
 #endif

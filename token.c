@@ -123,7 +123,9 @@ char *token_to_str(Token token)
 
 void token_print(Token token)
 {
-    printf("[Token] %s\n", token_to_str(token));
+    char *temp=token_to_str(token);
+    printf("[Token] %s\n",temp);
+    free(temp);
 }
 char *token_text(Token token)
 {

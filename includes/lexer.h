@@ -22,5 +22,5 @@ void lexer_skip_space(Lexer *lexer);
 void lexer_advance(Lexer *lexer);
 Token lexer_parse_id(Lexer *lexer);
 Token lexer_parse_number(Lexer *lexer);
-
+void lexer_free(Lexer *lexer);
 #endif

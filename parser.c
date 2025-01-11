@@ -505,3 +505,8 @@ AST *parser_parse(Parser *parser)
 {
     return parser_parse_compound(parser);
 }
+
+void parser_free(Parser *parser)
+{
+    free(parser);
+}

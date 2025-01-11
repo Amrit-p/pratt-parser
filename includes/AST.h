@@ -32,10 +32,11 @@ struct AST_STRUCT
     AST *left;
     AST *right;
     Token token;
-    define_array(childs,AST*);
+    define_array(childs, AST *);
 };
 AST *init_ast(AST_Type type);
 char *ast_type_to_str(int type);
 void ast_print(AST *root);
-size_t ast_push(AST *ast,AST *child);
+size_t ast_push(AST *ast, AST *child);
+void ast_free(AST *ast);
 #endif

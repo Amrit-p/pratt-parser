@@ -171,5 +171,28 @@ char *ast_to_json(AST *ast)
 }
 void ast_print(AST *root)
 {
-    fprintf(stdout, "%s\n", ast_to_json(root));
+    char *temp = ast_to_json(root);
+    fprintf(stdout, "%s\n", temp);
+    free(temp);
+}
+void ast_free(AST *ast)
+{
+    if (!ast)
+        return;
+    for (size_t i = 0; i < array_size(&ast->childs); i++)
+    {
+        AST *child = array_at(&ast->childs, i);
+        ast_free(child);
+    }
+    if (array_size(&ast->childs))
+        array_free(&ast->childs);
+    if (ast->value)
+        ast_free(ast->value);
+    if (ast->left)
+        ast_free(ast->left);
+    if (ast->right)
+        ast_free(ast->right);
+
+    free(ast->name);
+    free(ast);
 }
