@@ -1,7 +1,6 @@
 # Pratt parser in c.
 
-About memory management: who cares.
-
+Gives you AST in JSON format.
 ## Installation
 ```
 $ make
