@@ -1,11 +1,6 @@
-#include "AST.h"
-#include "token.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 AST *init_ast(AST_Type type)
 {
-    AST *ast = calloc(1, sizeof(AST));
+    AST *ast = arena_alloc(&default_arena, sizeof(*ast));
     ast->type = type;
     return ast;
 }
@@ -166,8 +161,8 @@ size_t ast_push(AST *ast, AST *child)
 {
     if (ast->type == AST_SEQUENCE)
     {
-        size_t i = array_size(&ast->as.sequenceExpr.exprs);
-        array_push(&ast->as.sequenceExpr.exprs, child);
+        size_t i = ast->as.sequenceExpr.count;
+        nob_da_append(&ast->as.sequenceExpr, child);
         return i;
     }
     if (ast->type == AST_STMT)
@@ -176,8 +171,8 @@ size_t ast_push(AST *ast, AST *child)
         {
         case STMT_COMPOUND:
         {
-            size_t i = array_size(&ast->as.statment.as.compound.statments);
-            array_push(&ast->as.statment.as.compound.statments, child);
+            size_t i = ast->as.statment.as.compound.count;
+            nob_da_append(&ast->as.statment.as.compound, child);
             return i;
         }
         default:
@@ -187,10 +182,7 @@ size_t ast_push(AST *ast, AST *child)
     fprintf(stderr, "[ERROR] unknown statementType in %s\n", __func__);
     exit(1);
 }
-char *ast_to_str(AST *ast)
-{
-    return ast_type_to_str(ast->type);
-}
+
 char *ast_type_to_str(AST_Type type)
 {
     switch (type)
@@ -224,110 +216,4 @@ char *ast_type_to_str(AST_Type type)
     default:
         return "UNKNOWN";
     }
-}
-char *ast_type_to_str(AST *ast)
-{
-    char *template = "\"type\":\"AST_%s\"";
-    char *type = ast_type_str(ast->type);
-    char *buffer = calloc(strlen(template) + strlen(type) + 1, sizeof(char));
-    sprintf(buffer, template, type);
-    return buffer;
-}
-char *ast_number_to_json(AST *ast)
-{
-    char *template = "{%s,\"number\":\"%f\"}";
-    char *type = ast_type_to_str(ast);
-    char *buffer = calloc(strlen(template) + strlen(type) + sizeof(double) + 1, sizeof(char));
-    sprintf(buffer, template, type, ast->as.number);
-    free(type);
-    return buffer;
-}
-char *ast_stmt_to_json(AST *ast)
-{
-    switch (ast->as.statment.type)
-    {
-    case STMT_COMPOUND:
-    {
-        char *template = "{\"type\":\"Compound\",\"statments\":[%s]}";
-        char *statments = calloc(1, sizeof(char));
-        for (size_t i = 0; i < array_size(&ast->as.statment.as.compound.statments); i++)
-        {
-            AST *child = array_at(&ast->as.statment.as.compound.statments, i);
-            char *expr = ast_to_json(child);
-            if (expr)
-            {
-                statments = realloc(statments, strlen(statments) + strlen(expr) + 2 * sizeof(char));
-                strcat(statments, expr);
-                if (i != array_size(&ast->as.statment.as.compound.statments) - 1)
-                    strcat(statments, ",");
-            }
-        }
-        char *buffer = calloc(strlen(template) + strlen(statments) + 1, sizeof(char));
-        sprintf(buffer, template, statments);
-        return buffer;
-    }
-    case STMT_PRINT:
-    {
-        char *template = "{\"type\":\"Print\",\"expression\":%s}";
-        char *expr = ast_to_json(ast->as.statment.as.print.expr);
-        char *print = calloc(1, sizeof(char));
-        sprintf(print, template, expr);
-        return print;
-    }
-    case STMT_IF:
-    {
-        char *template = "{\"type\":\"if\",\"condition\":%s,\"then\":%s";
-        char *condition = ast_to_json(ast->as.statment.as._if.condition);
-        char *then = ast_to_json(ast->as.statment.as._if.then);
-        char *buffer = calloc(strlen(template) + strlen(condition) + strlen(then) + 1, sizeof(char));
-        sprintf(buffer, template, condition, then);
-        if (ast->as.statment.as._if.other_wise)
-        {
-            char *template = ",\"otherwise\":%s";
-            char *otherwise = ast_to_json(ast->as.statment.as._if.other_wise);
-            char *buffer_otherwise = calloc((strlen(otherwise) + strlen(template) + 1), sizeof(char));
-            sprintf(buffer_otherwise, template, otherwise);
-            buffer = realloc(buffer, (strlen(buffer_otherwise) + strlen(buffer) + 1) * sizeof(char));
-            strcat(buffer, buffer_otherwise);
-            free(buffer_otherwise);
-        }
-        buffer = realloc(buffer, (strlen(buffer) + 2) * sizeof(char));
-        strcat(buffer, "}");
-        return buffer;
-    }
-    break;
-    default:
-        printf("[ERROR] %s\n", ast_type_to_str(ast->type));
-    }
-}
-char *ast_string_to_json(AST *ast)
-{
-    char *template = "{\"type\":\"%s\",\"value\":\"%s\"}";
-    char *buffer = (strlen(template) + strlen(ast->as.string) + 1, sizeof(char));
-    sprintf(buffer, template, ast_type_to_str(ast->type), ast->as.string);
-    return buffer;
-}
-char *ast_to_json(AST *ast)
-{
-    if (!ast)
-        return NULL;
-    switch (ast->type)
-    {
-    case AST_STMT:
-        return ast_stmt_to_json(ast);
-    case AST_NUMBER:
-        return ast_number_to_json(ast);
-    case AST_STRING:
-        return ast_string_to_json(ast);
-    default:
-        printf("[ERROR] unreachanle %s\n", ast_type_to_str(ast->type));
-        exit(1);
-        break;
-    }
-}
-void ast_print(AST *ast)
-{
-    char *json = ast_to_json(ast);
-    fprintf(stderr, "%s\n", json);
-    free(json);
 }

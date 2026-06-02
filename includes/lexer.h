@@ -1,7 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
+
 #include "token.h"
-#include <stddef.h>
 
 typedef struct
 {
@@ -15,12 +15,12 @@ typedef struct
     char *file_path;
 } Lexer;
 
-Lexer *init_lexer(char *source, char *path);
+Lexer *init_lexer(Nob_String_Builder sb, char *path);
 Token lexer_next_token(Lexer *lexer);
 Token lexer_advance_with(Lexer *lexer, Token token);
 void lexer_skip_space(Lexer *lexer);
 void lexer_advance(Lexer *lexer);
 Token lexer_parse_id(Lexer *lexer);
 Token lexer_parse_number(Lexer *lexer);
-
+void lexer_dump(Lexer *lexer, FILE *stream);
 #endif

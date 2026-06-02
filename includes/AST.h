@@ -1,9 +1,9 @@
 #ifndef AST_H
 #define AST_H
-#include "array.h"
-#include "token.h"
-typedef struct AST_STRUCT AST;
 
+#include "token.h"
+
+typedef struct AST_STRUCT AST;
 typedef enum
 {
     AST_NUMBER,
@@ -85,35 +85,38 @@ typedef struct
 
 typedef struct
 {
-    define_array(statments, AST *);
+    AST **items;
+    size_t count;
+    size_t capacity;
 } StatmentCompound;
+
 typedef struct
 {
     AST *condition;
     AST *then;
     AST *other_wise;
 } StatmentIf;
+
 typedef struct
 {
     AST *expr;
 } StatmentPrint;
+
 typedef struct
 {
     AST *expr;
 } StatmentReturn;
 
-typedef union
-{
-    StatmentCompound compound;
-    StatmentIf _if;
-    StatmentPrint print;
-    StatmentReturn _return;
-} Statment_As;
-
 typedef struct
 {
     StatmentType type;
-    Statment_As as;
+    union
+    {
+        StatmentCompound compound;
+        StatmentIf _if;
+        StatmentPrint print;
+        StatmentReturn _return;
+    } as;
 } Statment;
 
 typedef struct
@@ -137,26 +140,26 @@ typedef struct
 
 typedef struct
 {
-    define_array(exprs, AST *);
+    AST **items;
+    size_t count;
+    size_t capacity;
 } SequenceExpr;
-
-typedef union
-{
-    double number;
-    char *string;
-    UnaryExpr unaryExpr;
-    BinaryExpr binaryExpr;
-    TernaryExpr ternaryExpr;
-    SequenceExpr sequenceExpr;
-    FunctionCall functionCall;
-    PostfixExpr postfixExpr;
-    Statment statment;
-} AST_As;
 
 struct AST_STRUCT
 {
     AST_Type type;
-    AST_As as;
+    union
+    {
+        double number;
+        char *string;
+        UnaryExpr unaryExpr;
+        BinaryExpr binaryExpr;
+        TernaryExpr ternaryExpr;
+        SequenceExpr sequenceExpr;
+        FunctionCall functionCall;
+        PostfixExpr postfixExpr;
+        Statment statment;
+    } as;
     Token token;
 };
 AST *init_ast(AST_Type type);
@@ -165,8 +168,6 @@ AST *init_binary_ast(TokenType type);
 AST *init_unary_ast(TokenType type);
 AST *init_postfix_ast(TokenType type);
 AST *init_stmt_ast(StatmentType type);
-char *ast_type_to_str(AST_Type type);
 size_t ast_push(AST *ast, AST *child);
-char *ast_to_json(AST *ast);
-void ast_print(AST *ast);
+char *ast_type_to_str(AST_Type type);
 #endif

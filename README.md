@@ -1,9 +1,7 @@
-# Pratt parser in c.
-
-About memory management: who cares.
+# simpel interpreter in c.
 
 ## Installation
 ```
-$ make
-$ ./bin/parser.out filename
+$ gcc -I./includes -o nob nob.c && ./nob
+$ .build/interpreter
 ```

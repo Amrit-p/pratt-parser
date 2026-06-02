@@ -1,5 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
+
 #include "token.h"
 #include "AST.h"
 #include "lexer.h"

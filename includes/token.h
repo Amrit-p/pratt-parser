@@ -1,6 +1,6 @@
 #ifndef TOKEN_H
 #define TOKEN_H
-#include <stddef.h>
+
 typedef enum
 {
     TOKEN_ID,
@@ -50,6 +50,7 @@ typedef enum
     TOKEN_LCURLY,
     TOKEN_RCURLY,
     TOKEN_BITWISE_XOR,
+    TOKEN_DOT,
 } TokenType;
 typedef struct
 {
@@ -65,4 +66,5 @@ const char *token_type_str(TokenType type);
 char *token_to_str(Token token);
 void token_print(Token token);
 char *token_text(Token token);
+bool token_equal(Token t1, Token t2);
 #endif

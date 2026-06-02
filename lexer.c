@@ -1,9 +1,4 @@
-#include "lexer.h"
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
+
 #define MIN(a, b) \
     a < b ? a : b
 
@@ -155,6 +150,7 @@ char lexer_peek(Lexer *lexer, size_t offset)
 }
 Token lexer_next_token(Lexer *lexer)
 {
+    // TODO: use trie in here and make this code more readable
     while (lexer->current_char != '\0')
     {
         lexer_skip_space(lexer);
@@ -162,9 +158,10 @@ Token lexer_next_token(Lexer *lexer)
             return lexer_parse_id(lexer);
 
         if (
-            isdigit(lexer->current_char) ||
+            isdigit(lexer->current_char) /* ||
             lexer->current_char == '_' ||
-            lexer->current_char == '.')
+            lexer->current_char == '.' */
+        )
         {
             return lexer_parse_number(lexer);
         }
@@ -247,6 +244,8 @@ Token lexer_next_token(Lexer *lexer)
             return lexer_advance_with(lexer, init_token(&lexer->src[lexer->index], TOKEN_LCURLY, 1, lexer->row, lexer->col));
         case '}':
             return lexer_advance_with(lexer, init_token(&lexer->src[lexer->index], TOKEN_RCURLY, 1, lexer->row, lexer->col));
+        case '.':
+            return lexer_advance_with(lexer, init_token(&lexer->src[lexer->index], TOKEN_DOT, 1, lexer->row, lexer->col));
         case '\0':
             break;
         default:
@@ -257,15 +256,25 @@ Token lexer_next_token(Lexer *lexer)
     return init_token(&lexer->src[lexer->index], TOKEN_EOF, 0,
                       lexer->row, lexer->col);
 }
-Lexer *init_lexer(char *source, char *path)
+Lexer *init_lexer(Nob_String_Builder sb, char *path)
 {
-    Lexer *lexer = calloc(1, sizeof(Lexer));
+    Lexer *lexer = arena_alloc(&default_arena, sizeof(*lexer));
     lexer->col = 1;
     lexer->row = 1;
     lexer->index = 0;
-    lexer->src = source;
-    lexer->src_size = strlen(source);
-    lexer->current_char = source[0];
+    lexer->src = sb.items;
+    lexer->src_size = sb.count;
+    lexer->current_char = lexer->src[0];
     lexer->file_path = path;
     return lexer;
+}
+
+void lexer_dump(Lexer *lexer, FILE *stream)
+{
+    Token token = lexer_next_token(lexer);
+    while (token.type != TOKEN_EOF)
+    {
+        fprintf(stream, "%s\n", token_to_str(token));
+        token = lexer_next_token(lexer);
+    }
 }

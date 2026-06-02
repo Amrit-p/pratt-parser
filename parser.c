@@ -1,11 +1,3 @@
-#include "lexer.h"
-#include "parser.h"
-#include "token.h"
-#include "helper.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #define parser_error_prefix()                                            \
     do                                                                   \
     {                                                                    \
@@ -28,22 +20,15 @@
 
 char *parser_unexpected_token(Token token, char *message)
 {
-    char *template = "unexpected '%s'";
-    size_t message_len = 0;
-    if (message)
-    {
-        message_len = strlen(message) + 2;
-    }
     char *token_value = token_text(token);
-    char *buffer = calloc(strlen(template) + strlen(token_value) + message_len + 1, sizeof(char));
-    sprintf(buffer, template, token_value);
-    if (message)
-    {
-        strcat(buffer, ", ");
-        strcat(buffer, message);
-    }
 
-    free(token_value);
+    char *buffer = arena_sprintf(&default_arena,
+                  "unexpected '%s'",
+                  token_value);
+    if(message)
+    {
+        buffer = arena_sprintf(&default_arena, "%s, %s", buffer, message);
+    }
     return buffer;
 }
 
@@ -88,7 +73,7 @@ static ParseRule rules[] = {
 };
 Parser *init_parser(Lexer *lexer)
 {
-    Parser *parser = calloc(1, sizeof(Parser));
+    Parser *parser = arena_alloc(&default_arena, sizeof(Parser));
     parser->current_token = lexer_next_token(lexer);
     parser->had_error = 0;
     parser->panic_mode = 0;
@@ -425,7 +410,7 @@ AST *parser_parse_stmt(Parser *parser)
         stmt = parser_parse_print(parser);
         break;
     case TOKEN_RETURN:
-        UNIMPLEMENTED;
+        UNREACHABLE("TOKEN_RETURN");
         break;
     default:
         stmt = parser_parse_expr(parser);
@@ -461,16 +446,16 @@ AST *parser_parse_decl(Parser *parser)
     {
     case TOKEN_VAR:
         token_print(parser->current_token);
-        UNIMPLEMENTED;
+        NOB_TODO("TOKEN_VAR");
     case TOKEN_FUNCTION:
         token_print(parser->current_token);
-        UNIMPLEMENTED;
+        NOB_TODO("TOKEN_FUNCTION");
     case TOKEN_FOR:
         token_print(parser->current_token);
-        UNIMPLEMENTED;
+        NOB_TODO("TOKEN_FOR");
     case TOKEN_WHILE:
         token_print(parser->current_token);
-        UNIMPLEMENTED;
+        NOB_TODO("TOKEN_WHILE");
     case TOKEN_IF:
         return parser_parse_if(parser);
     case TOKEN_ELSE:

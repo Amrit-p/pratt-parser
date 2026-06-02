@@ -1,0 +1,13 @@
+--NAME--
+Basic lexer test
+
+--ARGS--
+-o TOKENS
+
+--SOURCE--
+print 1;
+
+--EXPECT--
+<type='TOKEN_PRINT' value='print' row='1' col='1'>
+<type='TOKEN_NUMBER' value='1' row='1' col='7'>
+<type='TOKEN_SEMICOLON' value=';' row='1' col='8'>

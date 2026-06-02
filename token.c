@@ -1,9 +1,3 @@
-#include "helper.h"
-#include "token.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
 Token init_token(char *start, TokenType type, size_t length, size_t row, size_t col)
 {
     Token token = {
@@ -105,20 +99,18 @@ const char *token_type_str(TokenType type)
         return "TOKEN_LCURLY";
     case TOKEN_RCURLY:
         return "TOKEN_RCURLY";
+    case TOKEN_DOT:
+        return "TOKEN_DOT";
     default:
         return "UNKNOWN";
     }
 }
 char *token_to_str(Token token)
 {
-    char *template = "<type='%s' value='%.*s' row='%d' col='%zu'>";
     const char *token_type = token_type_str(token.type);
-    size_t buffer_len = strlen(template) + strlen(token_type) +
-                        token.length + (size_t)helper_num_places((int)token.row) +
-                        (size_t)helper_num_places((int)token.col);
-    char *buffer = calloc(buffer_len, sizeof(char));
-    sprintf(buffer, template, token_type, token.length, token.start, token.row, token.col);
-    return buffer;
+    return arena_sprintf(&default_arena, 
+        "<type='%s' value='%.*s' row='%d' col='%zu'>",
+        token_type, token.length, token.start, token.row, token.col);
 }
 
 void token_print(Token token)
@@ -129,11 +121,14 @@ char *token_text(Token token)
 {
     if (token.type == TOKEN_EOF)
     {
-        char *buffer = calloc(12, sizeof(char));
-        strcat(buffer, "end of file");
-        return buffer;
+        return arena_sprintf(&default_arena, "end of file");
     }
-    char *buffer = calloc(token.length + 1, sizeof(char));
-    sprintf(buffer, "%.*s", (int)token.length, token.start);
-    return buffer;
+    return arena_sprintf(&default_arena, "%.*s", (int)token.length, token.start);
+}
+
+bool token_equal(Token t1, Token t2)
+{
+    return t1.type == t2.type &&
+           t1.length == t2.length &&
+           strncmp(t1.start, t2.start, t2.length) == 0;
 }
