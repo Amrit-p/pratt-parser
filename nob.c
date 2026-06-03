@@ -1,6 +1,7 @@
 #include "thirdparty/nob.c"
 
 #define INCLUDES_DIR "includes/"
+#define THIRDPARTY_DIR "thirdparty/"
 #define SRC_DIR "src/"
 #define BUILD_DIR ".build/"
 
@@ -30,6 +31,7 @@ bool build_the_interpreter(char *output_path)
                    "-Wno-missing-braces",
                    "-fno-strict-aliasing",
                    "-I" INCLUDES_DIR,
+                   "-I" THIRDPARTY_DIR,
                    "-o",
                    nob_temp_sprintf("%s%s", BUILD_DIR, output_path),
                    SRC_DIR"one.c");
