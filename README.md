@@ -2,6 +2,6 @@
 
 ## Installation
 ```
-$ gcc -I./includes -o nob nob.c && ./nob
+$ gcc -o nob nob.c && ./nob
 $ .build/interpreter
 ```
