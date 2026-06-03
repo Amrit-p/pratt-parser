@@ -1,11 +1,3 @@
-#define FLAG_IMPLEMENTATION
-#include "flag.h"
-
-#define NOB_IMPLEMENTATION
-#include "nob.h"
-
-#define ARENA_IMPLEMENTATION
-#include "arena.h"
 Arena default_arena = {0};
 
 #include "token.h"
@@ -18,10 +10,10 @@ Arena default_arena = {0};
 
 typedef enum
 {
+    OUTPUT_END,
     OUTPUT_TOKENS,
     OUTPUT_AST,
     OUTPUT_IR,
-    OUTPUT_END,
 } Output_Type;
 
 typedef struct
@@ -82,21 +74,12 @@ bool parse_options(Options *options)
 
     return true;
 }
-Options default_options(int argc, char **argv)
-{
-    Options options = {
-        .argc = argc,
-        .argv = argv,
-        .help = false,
-        .source = NULL,
-        .output = OUTPUT_END,
-    };
 
-    return options;
-}
 int main(int argc, char **argv)
 {
-    Options options = default_options(argc, argv);
+    Options options = {0};
+    options.argc = argc;
+    options.argv = argv;
 
     if (!parse_options(&options))
         return 2;
@@ -132,7 +115,6 @@ int main(int argc, char **argv)
     if (options.output == OUTPUT_AST)
     {
         NOB_TODO("impl ast_dump function");
-        goto success;
     }
 
     Compiler *compiler = ir_gen(ast);

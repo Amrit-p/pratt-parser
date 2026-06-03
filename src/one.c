@@ -1,3 +1,7 @@
+#include "../thirdparty/nob.c"
+#include "../thirdparty/flag.c"
+#include "../thirdparty/arena.c"
+
 #include "main.c"
 #include "lexer.c"
 #include "parser.c"

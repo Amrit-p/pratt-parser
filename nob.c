@@ -1,7 +1,7 @@
-#define NOB_IMPLEMENTATION
-#include <nob.h>
+#include "thirdparty/nob.c"
 
 #define INCLUDES_DIR "includes/"
+#define SRC_DIR "src/"
 #define BUILD_DIR ".build/"
 
 bool build_the_interpreter(char *output_path);
@@ -32,6 +32,6 @@ bool build_the_interpreter(char *output_path)
                    "-I" INCLUDES_DIR,
                    "-o",
                    nob_temp_sprintf("%s%s", BUILD_DIR, output_path),
-                   "one.c");
+                   SRC_DIR"one.c");
     return nob_cmd_run(&cmd);
 }
